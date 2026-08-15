@@ -1,0 +1,153 @@
+﻿object ExpensesFrame: TExpensesFrame
+  Left = 0
+  Top = 0
+  Width = 1022
+  Height = 581
+  Align = alClient
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  ParentFont = False
+  TabOrder = 0
+  object ExpensesPanel: TPanel
+    Left = 0
+    Top = 0
+    Width = 1022
+    Height = 106
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 0
+    object Label1: TLabel
+      Left = 12
+      Top = 44
+      Width = 30
+      Height = 11
+      Caption = #1059#1095#1077#1085#1080#1082
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+    end
+    object Label2: TLabel
+      Left = 228
+      Top = 44
+      Width = 23
+      Height = 11
+      Caption = #1044#1072#1090#1072
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+    end
+    object Label3: TLabel
+      Left = 346
+      Top = 44
+      Width = 51
+      Height = 11
+      Caption = #1053#1072#1079#1085#1072#1095#1077#1085#1080#1077
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+    end
+    object Label4: TLabel
+      Left = 614
+      Top = 44
+      Width = 30
+      Height = 11
+      Caption = #1057#1091#1084#1084#1072
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+    end
+    object ExpensePupilCombo: TComboBox
+      Left = 12
+      Top = 12
+      Width = 208
+      Height = 24
+      Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+    end
+    object ExpenseDateEdit: TEdit
+      Left = 228
+      Top = 12
+      Width = 110
+      Height = 24
+      TabOrder = 1
+    end
+    object ExpensePurposeEdit: TEdit
+      Left = 346
+      Top = 12
+      Width = 260
+      Height = 24
+      TabOrder = 2
+      TextHint = #1053#1072#1079#1085#1072#1095#1077#1085#1080#1077
+    end
+    object ExpenseSumEdit: TEdit
+      Left = 614
+      Top = 12
+      Width = 110
+      Height = 24
+      TabOrder = 3
+      TextHint = #1057#1091#1084#1084#1072
+    end
+    object AddExpenseButton: TButton
+      Left = 12
+      Top = 64
+      Width = 120
+      Height = 32
+      Caption = #1044#1086#1073#1072#1074#1080#1090#1100
+      TabOrder = 4
+      OnClick = AddExpenseClick
+    end
+    object ExpenseRefreshButton: TButton
+      Left = 138
+      Top = 64
+      Width = 120
+      Height = 32
+      Caption = #1054#1073#1085#1086#1074#1080#1090#1100
+      TabOrder = 5
+      OnClick = RefreshClick
+    end
+    object DeleteExpenseButton: TButton
+      Left = 264
+      Top = 64
+      Width = 120
+      Height = 32
+      Caption = #1059#1076#1072#1083#1080#1090#1100
+      TabOrder = 6
+      OnClick = DeleteExpenseClick
+    end
+  end
+  object ExpensesGrid: TDBGrid
+    Left = 0
+    Top = 106
+    Width = 1022
+    Height = 475
+    Align = alClient
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -13
+    TitleFont.Name = 'Tahoma'
+    TitleFont.Style = []
+    OnDblClick = ExpenseGridDbClick
+  end
+end

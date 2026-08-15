@@ -1,0 +1,112 @@
+﻿object PaymentsFrame: TPaymentsFrame
+  Left = 0
+  Top = 0
+  Width = 1022
+  Height = 581
+  Align = alClient
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  ParentFont = False
+  TabOrder = 0
+  object PaymentsPanel: TPanel
+    Left = 0
+    Top = 0
+    Width = 1022
+    Height = 106
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 0
+    object Label9: TLabel
+      Left = 12
+      Top = 44
+      Width = 30
+      Height = 11
+      Caption = #1059#1095#1077#1085#1080#1082
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+    end
+    object Label12: TLabel
+      Left = 614
+      Top = 44
+      Width = 30
+      Height = 11
+      Caption = #1057#1091#1084#1084#1072
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+    end
+    object PaymentPupilCombo: TComboBox
+      Left = 12
+      Top = 12
+      Width = 208
+      Height = 24
+      Style = csDropDownList
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'Tahoma'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 0
+    end
+    object PaymentSumEdit: TEdit
+      Left = 614
+      Top = 12
+      Width = 110
+      Height = 24
+      TabOrder = 1
+      TextHint = #1057#1091#1084#1084#1072
+    end
+    object AddPaymentButton: TButton
+      Left = 12
+      Top = 64
+      Width = 120
+      Height = 32
+      Caption = #1044#1086#1073#1072#1074#1080#1090#1100
+      TabOrder = 2
+      OnClick = AddPaymentClick
+    end
+    object PaymentRefreshButton: TButton
+      Left = 138
+      Top = 64
+      Width = 120
+      Height = 32
+      Caption = #1054#1073#1085#1086#1074#1080#1090#1100
+      TabOrder = 3
+      OnClick = RefreshClick
+    end
+    object DeletePaymentButton: TButton
+      Left = 264
+      Top = 64
+      Width = 120
+      Height = 32
+      Caption = #1059#1076#1072#1083#1080#1090#1100
+      TabOrder = 4
+      OnClick = DeletePaymentClick
+    end
+  end
+  object PaymentsGrid: TDBGrid
+    Left = 0
+    Top = 106
+    Width = 1022
+    Height = 475
+    Align = alClient
+    TabOrder = 1
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -13
+    TitleFont.Name = 'Tahoma'
+    TitleFont.Style = []
+    OnDblClick = PaymentGridDbClick
+  end
+end

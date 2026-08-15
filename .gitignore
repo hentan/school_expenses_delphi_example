@@ -1,0 +1,36 @@
+# Build artifacts
+*.dcu
+*.exe
+*.rsm
+*.map
+*.drc
+*.bpl
+*.tds
+*.apk
+*.so
+*.dll
+
+# Delphi IDE local / cache files
+*.dproj.local
+*.deployproj.local
+*.deployproj
+*.identcache
+*.tvsconfig
+*.dsk
+*.~*
+*.bak
+*.tmp
+
+# Delphi history / recovery
+__history/
+__recovery/
+*.~*
+
+# Build output
+build/
+bin/
+
+# Local agent / IDE workspace data
+.zcode/
+.codex/
+.agents/
