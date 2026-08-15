@@ -30,6 +30,10 @@ __recovery/
 build/
 bin/
 
+# SQL dump with sensitive data (keep local only)
+localhost_sqlserver.sql
+*.sql.dump
+
 # Local agent / IDE workspace data
 .zcode/
 .codex/
