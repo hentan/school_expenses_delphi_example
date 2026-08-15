@@ -1,0 +1,12 @@
+# Force CRLF line endings for text files in working tree and repo
+* text=auto eol=crlf
+
+# Binary files — never normalize
+*.res binary
+*.dres binary
+*.bdsproj binary
+*.dproj binary
+*.exe binary
+*.dll binary
+*.ico binary
+*.png binary
