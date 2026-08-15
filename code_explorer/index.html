@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SchoolExpensesDemo — просмотрщик кода Delphi</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand">
+        <div class="brand-title">SchoolExpensesDemo</div>
+        <div class="brand-sub">Delphi · .pas файлы</div>
+      </div>
+      <nav id="file-menu"></nav>
+      <div class="hint">Наведите курсор на подсвеченный блок — появится пояснение.</div>
+    </aside>
+    <main id="main">
+      <div id="file-title">Выберите файл слева</div>
+      <div id="code-panel">
+        <div class="welcome">
+          <p>Это обучающий просмотрщик исходников проекта <b>SchoolExpensesDemo</b>.</p>
+          <p>Слева — список модулей Delphi. Код каждого модуля разбит на блоки
+            (классы, методы, секции <code>uses</code>, <code>interface</code> и т.п.).
+            При наведении на блок подсвечивается весь диапазон строк и всплывает
+            подсказка: зачем этот код нужен и как работает.</p>
+          <p>Начните с <b>uDb</b> — подключение к базе, затем <b>uRepositories</b> →
+            <b>uServices</b> → <b>uMainData</b> → формы и фреймы.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div id="tooltip"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-pascal.min.js"></script>
+
+  <!-- Данные: один файл на каждый .pas модуль -->
+  <script src="files/uDb.js"></script>
+  <script src="files/uMigrations.js"></script>
+  <script src="files/uRepositories.js"></script>
+  <script src="files/uServices.js"></script>
+  <script src="files/uMainData.js"></script>
+  <script src="files/uUiHelpers.js"></script>
+  <script src="files/uBaseEditForm.js"></script>
+  <script src="files/uUpdatePupilForm.js"></script>
+  <script src="files/uUpdatePaymentForm.js"></script>
+  <script src="files/uUpdateExenseForm.js"></script>
+  <script src="files/uMainForm.js"></script>
+  <script src="files/uPupilsFrame.js"></script>
+  <script src="files/uPaymentsFrame.js"></script>
+  <script src="files/uExpensesFrame.js"></script>
+  <script src="files/uArchiveFrame.js"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>
