@@ -5,7 +5,8 @@ window.LEARN_FILES['uRepositories'] = {
 {
   Модуль доступа к данным (CRUD-репозитории).
   Содержит репозитории для учеников (parents_and_children),
-  поступлений (money_from_parents) и расходов (outlay).
+  поступлений (money_from_parents), расходов (outlay)
+  и закрытия периода — архивации (TArchiveRepository).
 
   Репозитории выполняют только запись/чтение в БД. Валидация и
   бизнес-правила живут в сервисном слое (uServices) — репозитории
@@ -66,6 +67,23 @@ type
     function Total: Currency;
   end;
 
+  // Результат закрытия периода (архивации).
+  TClosePeriodResult = record
+    ResetPayments: Integer;    // платежей обнулено (старые суммы уходят
+                               // в money_from_parents_arc через триггер UPDATE)
+    ArchivedExpenses: Integer; // расходов перенесено в outlay_arc
+    CarryOverSum: Currency;    // сальдо, записанное в outlay (остаток — с минусом)
+  end;
+
+  IArchiveRepository = interface
+    ['{F5A1C2E0-1111-4A11-9A11-000000000004}']
+    // Снимок данных перед архивацией: счётчики строк и сальдо, без изменений в БД.
+    function Preview: TClosePeriodResult;
+    // Атомарно переносит текущие платежи и расходы в архивные таблицы
+    // (через триггеры) и пишет итоговую строку сальдо в outlay.
+    function ClosePeriod(const ACarryOverItemName: string): TClosePeriodResult;
+  end;
+
   // Добавляет/изменяет/удаляет учеников.
   TPupilRepository = class(TRepository, IPupilRepository)
   public
@@ -92,6 +110,18 @@ type
     procedure Delete(AId: Integer);
     procedure Update(AId, APupilId: Integer; const ADate, AItemName: string; ASum: Currency);
     function Total: Currency;
+  end;
+
+  // Закрытие периода: расходы — в архив, платежи — обнуляются.
+  TArchiveRepository = class(TRepository, IArchiveRepository)
+  private
+    function SubmittedTotal: Currency;
+    function SpentTotal: Currency;
+    function NonZeroPaymentsCount: Integer;
+    function ExpensesCount: Integer;
+  public
+    function Preview: TClosePeriodResult;
+    function ClosePeriod(const ACarryOverItemName: string): TClosePeriodResult;
   end;
 
 implementation
@@ -256,103 +286,198 @@ begin
   );
 end;
 
+{ TArchiveRepository }
+
+function TArchiveRepository.SubmittedTotal: Currency;
+begin
+  Result := FConnection.ExecSQLScalar(
+    'SELECT COALESCE(SUM(summ_to_first_november), 0) FROM dbo.money_from_parents');
+end;
+
+function TArchiveRepository.SpentTotal: Currency;
+begin
+  Result := FConnection.ExecSQLScalar(
+    'SELECT COALESCE(SUM(summ), 0) FROM dbo.outlay');
+end;
+
+function TArchiveRepository.NonZeroPaymentsCount: Integer;
+begin
+  // Только ненулевые суммы — нулевые строки обнулять и архивировать не нужно.
+  Result := FConnection.ExecSQLScalar(
+    'SELECT COUNT(*) FROM dbo.money_from_parents WHERE summ_to_first_november <> 0');
+end;
+
+function TArchiveRepository.ExpensesCount: Integer;
+begin
+  Result := FConnection.ExecSQLScalar(
+    'SELECT COUNT(*) FROM dbo.outlay');
+end;
+
+function TArchiveRepository.Preview: TClosePeriodResult;
+begin
+  Result.ResetPayments := NonZeroPaymentsCount;
+  Result.ArchivedExpenses := ExpensesCount;
+  // Сальдо = потрачено − сдано: при остатке денег уйдёт в outlay с минусом,
+  // при перерасходе — с плюсом.
+  Result.CarryOverSum := SpentTotal - SubmittedTotal;
+end;
+
+function TArchiveRepository.ClosePeriod(
+  const ACarryOverItemName: string): TClosePeriodResult;
+begin
+  FConnection.StartTransaction;
+  try
+    Result := Preview;
+
+    if (Result.ResetPayments > 0) or (Result.ArchivedExpenses > 0) then
+    begin
+      // Платежи не удаляются, а обнуляются: список учеников остаётся заполненным,
+      // старые суммы попадают в архив через триггер money_from_parents_update.
+      FConnection.ExecSQL(
+        'UPDATE dbo.money_from_parents SET summ_to_first_november = 0 ' +
+        'WHERE summ_to_first_november <> 0');
+
+      // Удалённые расходы уходят в архив через триггер delete_from_outlay.
+      FConnection.ExecSQL('DELETE FROM dbo.outlay');
+
+      // Итоговая строка сальдо остаётся в рабочих данных. customer = 0 —
+      // «без ученика», в гриде расходов имя будет пустым (LEFT JOIN).
+      FConnection.ExecSQL(
+        'INSERT INTO dbo.outlay(date_purchaise, item_name, customer, summ) ' +
+        'VALUES (:date_purchaise, :item_name, 0, :summ)',
+        [FormatDateTime('yyyy-mm-dd', Date), ACarryOverItemName, Result.CarryOverSum]
+      );
+    end;
+
+    FConnection.Commit;
+  except
+    FConnection.Rollback;
+    raise;
+  end;
+end;
+
 end.
 `,
   annotations: [
     {
-      startLine: 1, endLine: 11,
+      startLine: 3, endLine: 11,
       title: 'Заголовок модуля uRepositories',
-      explanation: 'Слой доступа к данным (Data Access Layer). Три репозитория — по одному на каждую таблицу мутаций (ученики, поступления, расходы). Главное правило: репозитории НЕ валидируют данные — только выполняют SQL. Валидация живёт в uServices. Это разделение ответственности: репозиторий = «как записать», сервис = «что можно записать».'
+      explanation: 'Слой доступа к данным (Data Access Layer). Четыре репозитория — по одному на каждую операцию записи: ученики, поступления, расходы и закрытие периода (архивация). Главное правило: репозитории НЕ валидируют данные — только выполняют SQL. Валидация живёт в uServices. Разделение ответственности: репозиторий = «как записать», сервис = «что можно записать».'
     },
     {
-      startLine: 13, endLine: 18,
+      startLine: 15, endLine: 18,
       title: 'interface + uses',
-      explanation: 'System.SysUtils (базовые утилиты), Winapi.Windows (для некоторых типов), FireDAC.Comp.Client (TFDConnection и TFDQuery). Data.DB подключается в implementation — он нужен только для FieldByName/AsInteger при чтении.'
+      explanation: 'System.SysUtils (базовые утилиты и тип Currency), Winapi.Windows (типы вроде HResult), FireDAC.Comp.Client (TFDConnection и TFDQuery). Модуль Data.DB подключается ниже, в implementation, — он нужен только внутри для FieldByName при чтении списков.'
     },
     {
       startLine: 20, endLine: 33,
       title: 'TRepository — базовый класс с IInterface',
-      explanation: 'Родитель всех репозиториев. Хранит FConnection (соединение с БД). Наследуется от TObject И реализует IInterface. IInterface требует три метода: QueryInterface, _AddRef, _Release — их stub-реализация без подсчёта ссылок (возвращает -1). Зачем это: сервисы хранят репозитории через интерфейсные ссылки (IPupilRepository и т.п.). В Delphi интерфейсная ссылка обычно увеличивает счётчик и освобождает объект, когда ссылка выходит из области. Но здесь время жизни управляется вручную (Free в .dpr), поэтому stub-реализация отключает авто-освобождение — объект не уничтожится преждевременно. Это стандартный трюк, как у TComponent.'
+      explanation: 'Родитель всех репозиториев. Хранит FConnection (соединение с БД) и реализует IInterface — «спускаемый крючок» Delphi-интерфейсов: QueryInterface, _AddRef, _Release. Здесь они заглушки (_AddRef/_Release возвращают -1), потому что временем жизни объектов управляет человек через Free в .dpr, а не счётчик ссылок. Без этого объект мог бы уничтожиться сам в момент, когда сервис отпускает интерфейсную ссылку.'
     },
     {
       startLine: 35, endLine: 40,
       title: 'TPupilComboEntry — запись для combo',
-      explanation: 'record (значимый тип) хранит id ученика и отображаемое имя. Используется для заполнения выпадающих списков (TComboBox) на формах платежей и расходов. TPupilComboArray = array of — динамический массив таких записей.'
+      explanation: 'record — составной тип-«коробочка» без методов: Id ученика и DisplayName (что показать в списке). TPupilComboArray = array of ... — динамический массив таких коробочек. Эти записи заполняют выпадающие списки на формах платежей и расходов.'
     },
     {
       startLine: 42, endLine: 49,
-      title: 'IPupilRepository — интерфейс репозитория учеников',
-      explanation: 'Чистый интерфейс (контракт) без реализации. GUID в квадратных скобках — нужен для QueryInterface/GetInterface. Методы: Add (добавить), Delete (удалить по id), Update (изменить), ListForCombo (список для выпадающего списка). Сервисы зависят от интерфейса, а не от класса TPupilRepository — это позволяет подменять реализацию (например, моком в тестах) и не связывает слои жёстко.'
+      title: 'IPupilRepository — контракт репозитория учеников',
+      explanation: 'interface — это чистый «контракт»: список методов без кода. GUID в квадратных скобках нужен механизму QueryInterface. Сервисы зависят от контракта, а не от конкретного класса — поэтому в тестах вместо базы можно подставить мок с тем же контрактом. Это и есть слабая связанность слоёв.'
     },
     {
       startLine: 51, endLine: 57,
       title: 'IPaymentRepository',
-      explanation: 'Контракт репозитория поступлений. Включает метод Total — сумма всех поступлений (для расчёта баланса). Обратите внимание: Add принимает APupilId и AChildrenName — id и имя передаются вместе (денормализованно, в духе схемы money_from_parents).'
+      explanation: 'Контракт поступлений. Обратите внимание на Total — сумма всех поступлений для баланса. И на то, что Add принимает APupilId и AChildrenName вместе: схема таблицы денормализована, имя хранится прямо в строке платежа рядом с id ученика.'
     },
     {
       startLine: 59, endLine: 65,
       title: 'IExpenseRepository',
-      explanation: 'Контракт репозитория расходов. Update принимает и AId (какой расход менять) и APupilId (кто платил) — два id. Тоже есть Total для баланса.'
+      explanation: 'Контракт расходов. У Update два разных id: AId (какой расход менять) и APupilId (кто покупал) — у расхода есть собственный ключ, в отличие от платежей. Total тоже нужен балансу.'
     },
     {
-      startLine: 67, endLine: 93,
-      title: 'Классы-реализации TPupil/TPayment/TExpenseRepository',
-      explanation: 'Конкретные репозитории. Каждый наследует TRepository (получает FConnection) и реализует свой интерфейс. class(TRepository, IPupilRepository) — множественное наследование: один класс-родитель + интерфейсы. В implementation каждый метод просто выполняет параметризованный SQL через FConnection.ExecSQL.'
+      startLine: 67, endLine: 73,
+      title: 'TClosePeriodResult — отчёт об архивации',
+      explanation: 'Ещё одна запись-«коробочка»: сколько платежей обнулено, сколько расходов ушло в архив и какое сальдо записано. Сервис и форма используют её дважды: сначала чтобы показать пользователю точные цифры ДО операции, потом чтобы отчитаться о результате. Комментарии у полей объясняют физику: старые суммы попадают в архивный триггер, а сальдо пишется со знаком минус.'
     },
     {
-      startLine: 100, endLine: 104,
+      startLine: 75, endLine: 82,
+      title: 'IArchiveRepository — контракт архивации',
+      explanation: 'Два метода — классический безопасный паттерн. Preview только считает («что будет, если?»), ClosePeriod делает. Пользователь сначала видит цифры из Preview в диалоге подтверждения, и лишь после «ОК» выполняется настоящая операция. Слово «атомарно» в комментарии значит: все изменения пройдут вместе или не пройдут вовсе — за это отвечает транзакция в реализации.'
+    },
+    {
+      startLine: 84, endLine: 110,
+      title: 'Классы-реализации трёх репозиториев',
+      explanation: 'Конкретные исполнители контрактов. Запись class(TRepository, IPupilRepository) читается так: родитель — TRepository (даёт FConnection), плюс обещание выполнить контракт IPupilRepository. Сами методы — простые параметризованные SQL-команды, смотрим их в implementation.'
+    },
+    {
+      startLine: 112, endLine: 122,
+      title: 'TArchiveRepository — четвёртый репозиторий',
+      explanation: 'Объявление репозитория архивации. В private спрятаны четыре вспомогательные функции-счётчика (сколько сдано, потрачено, сколько ненулевых платежей и расходов) — наружу торчат только Preview и ClosePeriod. Правило «private для внутренностей, public для контракта» делает класс понятным с первого взгляда.'
+    },
+    {
+      startLine: 129, endLine: 133,
       title: 'TRepository.Create',
-      explanation: 'Принимает соединение и сохраняет в FConnection. inherited Create инициализирует TObject. Все репозитории-наследники используют этот конструктор (не переопределяют его).'
+      explanation: 'Конструктор принимает соединение и сохраняет его в поле. inherited Create вызывает конструктор родителя (TObject). Наследники не переопределяют конструктор — всем нужно одно и то же.'
     },
     {
-      startLine: 106, endLine: 122,
-      title: 'Stub-реализация IInterface',
-      explanation: 'QueryInterface — через GetInterface возвращает интерфейс по GUID (S_OK если найден, E_NOINTERFACE иначе). _AddRef/_Release возвращают -1 — это отключает подсчёт ссылок. Если бы они считали ссылки, интерфейсная ссылка в сервисе при выходе из области вызвала бы _Release, счётчик стал бы 0, и объект уничтожился бы сам — но мы управляем им вручную через .dpr. Stub-возврат -1 («неуправляемый») предотвращает это. ВАЖНО: возвращать нужно именно -1 (а не 0), иначе Delphi всё равно может освободить объект.'
+      startLine: 135, endLine: 151,
+      title: 'Заглушки IInterface',
+      explanation: 'QueryInterface через GetInterface ищет у объекта нужный интерфейс по GUID (S_OK — нашёл, E_NOINTERFACE — нет). _AddRef/_Release возвращают -1 — сигнал «не считай ссылки, объектом владеют вручную». Возвращать нужно именно -1: ноль означал бы «ссылок нет», и Delphi мог бы уничтожить объект при первом же выходе интерфейсной переменной из области видимости.'
     },
     {
-      startLine: 126, endLine: 134,
+      startLine: 155, endLine: 163,
       title: 'TPupilRepository.Add',
-      explanation: 'Выполняет INSERT. Синтаксис :children_name — именованный параметр FireDAC. Значения передаются массивом [AChildrenName, AParentName, APhone, AAfterLesson] — FireDAC сопоставляет их параметрам по порядку. Параметризация защищает от SQL-инъекций (значения не вставляются в текст SQL, а передаются отдельно).'
+      explanation: 'INSERT с именованными параметрами (:children_name и т.д.) — значения передаются отдельным массивом, FireDAC сопоставляет их по порядку появления в SQL. Параметризация защищает от SQL-инъекций: даже если в имени ученика окажется апостроф или кусок SQL, он останется просто текстом.'
     },
     {
-      startLine: 136, endLine: 142,
+      startLine: 165, endLine: 171,
       title: 'TPupilRepository.Delete',
-      explanation: 'DELETE WHERE id = :id. Удаление по первичному ключу. Триггер archive не срабатывает (нет триггера на удаление учеников) — только деньги/расходы архивируются.'
+      explanation: 'Удаление по первичному ключу id. Триггеров на удаление учеников в схеме нет, поэтому архив этот запрос не наполняет.'
     },
     {
-      startLine: 144, endLine: 153,
+      startLine: 173, endLine: 182,
       title: 'TPupilRepository.Update',
-      explanation: 'UPDATE всех полей ученика по id. Параметры в массиве идут в порядке появления в SQL: children_name, parent_name, phone, after_lesson, id. Важно соблюдать этот порядок — FireDAC сопоставляет по позиции.'
+      explanation: 'UPDATE всех полей по id. Порядок значений в массиве должен совпадать с порядком параметров в SQL: children_name, parent_name, phone, after_lesson, id. Перепутаете порядок — данные молча встанут не в те колонки, поэтому здесь важно быть внимательным.'
     },
     {
-      startLine: 155, endLine: 181,
+      startLine: 184, endLine: 210,
       title: 'TPupilRepository.ListForCombo',
-      explanation: 'Единственный метод с ЧТЕНИЕМ (остальные — запись). Создаёт TFDQuery, открывает SELECT, в цикле читает строки и собирает массив TPupilComboArray. try/finally гарантирует освобождение Reader даже при ошибке. SetLength(Result, Count+1) — динамическое растягивание массива (неэффективно для больших списков, но для школьного класса достаточно). Trim убирает пробелы; если имя пустое — подставляется «Ученик <id>».'
+      explanation: 'Единственный метод с чтением строк (остальные только пишут или возвращают одно число). Создаётся временный TFDQuery, SELECT открывается, цикл while not Eof собирает массив записей. try/finally гарантирует Free даже при ошибке. Если имя пустое — подставляется заглушка «Ученик <id>», чтобы в выпадающем списке не было пустых строк.'
     },
     {
-      startLine: 185, endLine: 193,
+      startLine: 214, endLine: 222,
       title: 'TPaymentRepository.Add',
-      explanation: 'INSERT в money_from_children. Заметьте: id — это id ученика (APupilId), а не отдельный PK. В этой схеме один ученик = одна запись о платеже. ASum: Currency — денежный тип, копейки не теряются.'
+      explanation: 'INSERT в money_from_parents. Ключевой момент схемы: id — это id ученика (APupilId), а не отдельный номер платежа. Один ученик = одна строка о деньгах. ASum имеет тип Currency — денежный тип с двумя знаками после запятой, копейки не теряются.'
     },
     {
-      startLine: 195, endLine: 211,
+      startLine: 224, endLine: 240,
       title: 'TPaymentRepository Delete/Update',
-      explanation: 'Delete — по id (= id ученика). Update — меняет имя и сумму. В обоих случаях :id — это id ученика, потому что в money_from_parents.id хранится именно он.'
+      explanation: 'Delete и Update работают по id, который здесь совпадает с id ученика. Update меняет имя и сумму, но не может сменить самого ученика — для этого пришлось бы менять первичный ключ строки.'
     },
     {
-      startLine: 213, endLine: 218,
+      startLine: 242, endLine: 247,
       title: 'TPaymentRepository.Total',
-      explanation: 'ExecSQLScalar — выполняет запрос и возвращает одно значение (первый столбец первой строки). COALESCE(SUM(...), 0) — если строк нет, SUM вернёт NULL, COALESCE заменит его на 0. Используется для расчёта баланса в TBalanceService.'
+      explanation: 'ExecSQLScalar выполняет запрос и возвращает одно-единственное значение (первый столбец первой строки). COALESCE(SUM(...), 0): если таблица пуста, SUM вернёт NULL, а COALESCE подменит его нулём — иначе Delphi получил бы ошибку приведения типа.'
     },
     {
-      startLine: 222, endLine: 248,
-      title: 'TExpenseRepository: Add/Delete/Update',
-      explanation: 'Аналогично платежам, но для таблицы outlay. Add вставляет дату, на что потрачено, id покупателя (customer = APupilId) и сумму. Update принимает и AId (расхода) и APupilId (покупателя) — расход идентифицируется своим id, а покупатель отдельным полем. Поля :customer и :summ — параметры.'
+      startLine: 251, endLine: 284,
+      title: 'TExpenseRepository: Add/Delete/Update/Total',
+      explanation: 'Работа с таблицей outlay устроена так же, как у платежей, но у расхода есть собственный id (колонка IDENTITY — база нумерует сама), а customer хранит id покупателя отдельно. Total суммирует расходы для баланса: Balance = Total(платежи) − Total(расходы).'
     },
     {
-      startLine: 250, endLine: 255,
-      title: 'TExpenseRepository.Total',
-      explanation: 'Сумма всех расходов из outlay. Используется в TBalanceService.Balance = Total(платежи) − Total(расходы). COALESCE защищает от пустой таблицы.'
+      startLine: 286, endLine: 311,
+      title: 'Четыре счётчика для архивации',
+      explanation: 'Вспомогательные функции TArchiveRepository: сколько сдано (SubmittedTotal), сколько потрачено (SpentTotal), сколько ненулевых платежей и сколько расходов. Каждая — один ExecSQLScalar. Ненулевые важны: обнулять уже пустые строки бессмысленно, они и так не участвуют в балансе. Мелкие частные функции вместо одного гигантского запроса — способ сделать код читаемым.'
+    },
+    {
+      startLine: 313, endLine: 320,
+      title: 'Preview — снимок «что произойдёт»',
+      explanation: 'Preview ничего не меняет в базе: только заполняет TClosePeriodResult счётчиками и сальдо (SpentTotal − SubmittedTotal). Знак объяснён в комментарии: если денег осталось больше, чем потрачено, сальдо уйдёт в расходы с минусом. Этот метод вызывается перед показом диалога подтверждения.'
+    },
+    {
+      startLine: 322, endLine: 354,
+      title: 'ClosePeriod — главная операция в транзакции',
+      explanation: 'StartTransaction открывает транзакцию — «всё или ничего»: либо выполнятся все три команды, либо база вернётся к исходному состоянию через Rollback. Внутри: Preview пересчитывает цифры уже внутри транзакции; UPDATE обнуляет ненулевые платежи (строки остаются, старые суммы улавливает триггер и пишет в архив); DELETE сносит расходы (триггер копирует их в outlay_arc); INSERT добавляет строку сальдо c customer = 0 — «без ученика». Commit фиксирует изменения. except..Rollback..raise — откатить и пробросить ошибку выше, чтобы UI показал её пользователю.'
     }
   ]
 };

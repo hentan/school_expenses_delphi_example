@@ -114,7 +114,7 @@ end.
     {
       startLine: 11, endLine: 26,
       title: 'Класс TuEditPaymentForm',
-      explanation: 'class(TBaseEditForm) — наследник базовой формы. Поля Edit1-3, Button1-2, Label1-3 УНАСЛЕДОВАНЫ (не объявлены здесь, берутся из .dfm базы). Добалены свои: PupilCombo (TComboBox) и PupilLabel. override на 5 методах — переопределение виртуальных хуков. constructor reintroduce — расширенная сигнатура (добавлен список учеников).'
+      explanation: 'class(TBaseEditForm) — наследник базовой формы. Поля Edit1-3, Button1-2, Label1-3 УНАСЛЕДОВАНЫ (не объявлены здесь, берутся из .dfm базы). Добавлены свои: PupilCombo (TComboBox) и PupilLabel. override на 5 методах — переопределение виртуальных хуков. constructor reintroduce — расширенная сигнатура (добавлен список учеников).'
     },
     {
       startLine: 35, endLine: 45,

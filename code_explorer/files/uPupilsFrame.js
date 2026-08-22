@@ -174,7 +174,7 @@ end.
     {
       startLine: 60, endLine: 68,
       title: 'Init — привязка данных',
-      explanation: 'Сохраняет сервис, данные и колбэк в приватные поля. Ключевая строка: PupilsGrid.DataSource := FMainData.PupilsSource — привязывает грид к источнику данных. После этого грид АВТОМАТИЧЕКИ отображает данные из запроса и обновляется при RefreshData. TDBGrid + TDataSource — data binding VCL, ручной синхронизации не нужно.'
+      explanation: 'Сохраняет сервис, данные и колбэк в приватные поля. Ключевая строка: PupilsGrid.DataSource := FMainData.PupilsSource — привязывает грид к источнику данных. После этого грид АВТОМАТИЧЕСКИ отображает данные из запроса и обновляется при RefreshData. TDBGrid + TDataSource — data binding VCL, ручной синхронизации не нужно.'
     },
     {
       startLine: 70, endLine: 73,
