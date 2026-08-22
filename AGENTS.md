@@ -82,6 +82,8 @@ VCL-приложение на Delphi для учёта школьных расх
 3. `uServices.pas` — обновить сигнатуры сервиса и валидацию при необходимости.
 4. `uMainData.pas` — обновить `SELECT`, `SetFieldLayout` и обёртки `Current*`.
 5. Форма ввода/редактирования — добавить Edit/Combo + обработку.
+6. `tests/uTestMocks.pas` — обновить мок изменённого интерфейса, при
+   необходимости дополнить тесты.
 
 ### Добавить новый справочник
 1. Миграция: `CREATE TABLE` + триггеры архива при необходимости.
@@ -90,6 +92,7 @@ VCL-приложение на Delphi для учёта школьных расх
 4. Запрос + DataSource + обёртки в `uMainData.pas`.
 5. Вкладка/грид в `uMainForm` (`.dfm` + `.pas`).
 6. Создание репозитория/сервиса в composition root (`SchoolExpensesDemo.dpr`).
+7. Мок в `tests/uTestMocks.pas` + тесты сервиса/репозитория.
 
 ### Изменить подключение к БД
 - Параметры в `uDb.pas`: `SqlServerName`, `SqlDatabaseName`.
@@ -129,10 +132,45 @@ VCL-приложение на Delphi для учёта школьных расх
   конструктор формы.
 - Ошибки `E2169 Field definition not allowed after methods or properties` =
   некорректная комбинация директив метода (например, `virtual; reintroduce`
-  через пробел). Используйте `reintroduce`单独, без `virtual`, если нужно скрыть
-  конструктор базового класса.
+  через пробел). Используйте `reintroduce` отдельно, без `virtual`, если нужно
+  скрыть конструктор базового класса.
 - Ошибки `Неправильный синтаксис около "TRIGGER"` = `CREATE TRIGGER` в одном
   батче с `IF` — замените на `CREATE OR ALTER TRIGGER`.
+- В тестах связка `E2003 Undeclared identifier: 'OneTimeSetup'` + `E2065
+  Unsatisfied forward or external declaration` = имя реализации метода фикстуры
+  не совпадает с объявлением в классе (метод должен называться как в объявлении,
+  а не как атрибут DUnitX: `[SetupFixture]` — это атрибут, имя метода любое).
+- `E2003 Undeclared identifier: 'Ignore'` в тестах = в этой версии DUnitX нет
+  `Assert.Ignore`. Пропуск тестов делайте условной регистрацией фикстуры:
+  `if SqlServerAvailable then TDUnitX.RegisterTestFixture(...)` в `initialization`.
+- Ошибка VCL `Control ... has no parent window` в тестах = визуальному
+  компоненту нужен родитель для создания handle. Заводите форму-хост:
+  `FHost := TForm.Create(nil); FCombo.Parent := FHost;`.
+
+## Тесты
+
+- Проект тестов — `tests/SchoolExpensesTests.dpr`: консольный раннер DUnitX,
+  собирается отдельно от основного приложения. Сборка и запуск из каталога
+  `tests`:
+  ```bash
+  cd "/c/Users/hentan/Documents/learn delfi/school_expenses_delphi_example/tests"
+  DCC="C:\\Program Files (x86)\\Embarcadero\\Studio\\37.0\\bin\\dcc64.exe"
+  "$DCC" -B SchoolExpensesTests.dpr
+  ./SchoolExpensesTests.exe
+  ```
+- Код возврата: `0` — все тесты прошли, `1` — есть провалы/ошибки, `2` — упал
+  сам раннер.
+- Модульные тесты (`uServiceTests`, `uUiHelperTests`) работают без БД — на
+  моках из `tests/uTestMocks.pas`.
+- Интеграционные тесты (`uRepositoryTests`) требуют SQL Server на `localhost`:
+  пересоздают отдельную базу `foura_tests`, боевая база `foura` не затрагивается.
+  Если сервер недоступен, фикстура не регистрируется (проверка
+  `SqlServerAvailable` в секции `initialization`) и прогон остаётся зелёным.
+- При изменении интерфейсов репозиториев правьте и моки в `uTestMocks.pas`,
+  иначе тестовый проект перестанет компилироваться.
+- Известное ограничение схемы №1 (см. architecture.md): интеграционный тест не
+  вызывает `TPupilRepository.Add`, т.к. колонка `parents_and_children.id`
+  создана без `IDENTITY` — строка ученика создаётся прямым INSERT с явным id.
 
 ## Файлы проекта
 
@@ -151,6 +189,11 @@ VCL-приложение на Delphi для учёта школьных расх
 | `uUpdatePaymentForm.pas` / `.dfm` | Форма платежа |
 | `uUpdateExenseForm.pas` / `.dfm` | Форма расхода |
 | `uUiHelpers.pas` | UI-вспомогательные функции |
+| `tests/SchoolExpensesTests.dpr` | Консольный раннер тестов DUnitX |
+| `tests/uTestMocks.pas` | Моки репозиториев для модульных тестов |
+| `tests/uServiceTests.pas` | Модульные тесты сервисов (без БД) |
+| `tests/uUiHelperTests.pas` | Модульные тесты uUiHelpers (без БД) |
+| `tests/uRepositoryTests.pas` | Интеграционные тесты на SQL Server (база foura_tests) |
 | `localhost_sqlserver.sql` | Дамп схемы и данных (БД foura/seconda/trirda) |
 | `architecture.md` | Описание архитектуры |
 | `agents.md` | Это руководство |
