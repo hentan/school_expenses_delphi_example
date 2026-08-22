@@ -18,6 +18,11 @@ type
   // пользователю в UI (формы ловят его и показывают через ShowMessage).
   EValidationException = class(Exception);
 
+const
+  // Назначение итоговой строки сальдо, остающейся в outlay после архивации.
+  CarryOverItemName = 'Сальдо на конец периода';
+
+type
   // Сервис учеников: валидация + делегирование IPupilRepository.
   TPupilService = class
   private
@@ -63,6 +68,17 @@ type
   public
     constructor Create(APayments: IPaymentRepository; AExpenses: IExpenseRepository);
     function Balance: Currency;
+  end;
+
+  // Сервис архивации: закрывает период — текущие платежи и расходы
+  // переносятся в архивные таблицы, в outlay остаётся строка сальдо.
+  TArchiveService = class
+  private
+    FRepository: IArchiveRepository;
+  public
+    constructor Create(ARepository: IArchiveRepository);
+    function Preview: TClosePeriodResult;
+    function ClosePeriod: TClosePeriodResult;
   end;
 
 implementation
@@ -208,6 +224,27 @@ end;
 function TBalanceService.Balance: Currency;
 begin
   Result := FPayments.Total - FExpenses.Total;
+end;
+
+{ TArchiveService }
+
+constructor TArchiveService.Create(ARepository: IArchiveRepository);
+begin
+  inherited Create;
+  FRepository := ARepository;
+end;
+
+function TArchiveService.Preview: TClosePeriodResult;
+begin
+  Result := FRepository.Preview;
+end;
+
+function TArchiveService.ClosePeriod: TClosePeriodResult;
+begin
+  Result := FRepository.ClosePeriod(CarryOverItemName);
+  // Если обнулять и архивировать было нечего, репозиторий ничего не менял.
+  if (Result.ResetPayments = 0) and (Result.ArchivedExpenses = 0) then
+    raise EValidationException.Create('Нет данных для архивации');
 end;
 
 end.

@@ -31,10 +31,12 @@ var
   Pupils: TPupilRepository;
   Payments: TPaymentRepository;
   Expenses: TExpenseRepository;
+  Archive: TArchiveRepository;
   PupilSvc: TPupilService;
   PaymentSvc: TPaymentService;
   ExpenseSvc: TExpenseService;
   Balance: TBalanceService;
+  ArchiveSvc: TArchiveService;
   MainData: TMainData;
 
 begin
@@ -49,27 +51,32 @@ begin
     Pupils := TPupilRepository.Create(Db.Connection);
     Payments := TPaymentRepository.Create(Db.Connection);
     Expenses := TExpenseRepository.Create(Db.Connection);
+    Archive := TArchiveRepository.Create(Db.Connection);
     try
       PupilSvc := TPupilService.Create(Pupils);
       PaymentSvc := TPaymentService.Create(Payments);
       ExpenseSvc := TExpenseService.Create(Expenses);
       Balance := TBalanceService.Create(Payments, Expenses);
+      ArchiveSvc := TArchiveService.Create(Archive);
       try
         MainData := TMainData.Create(Db.Connection);
         try
           Application.CreateForm(TMainForm, MainForm);
-          MainForm.Init(PupilSvc, PaymentSvc, ExpenseSvc, Balance, MainData);
+          MainForm.Init(PupilSvc, PaymentSvc, ExpenseSvc, Balance,
+            ArchiveSvc, MainData);
           Application.Run;
         finally
           MainData.Free;
         end;
       finally
+        ArchiveSvc.Free;
         Balance.Free;
         ExpenseSvc.Free;
         PaymentSvc.Free;
         PupilSvc.Free;
       end;
     finally
+      Archive.Free;
       Expenses.Free;
       Payments.Free;
       Pupils.Free;

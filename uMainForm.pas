@@ -42,6 +42,7 @@ type
     FPaymentSvc: TPaymentService;
     FExpenseSvc: TExpenseService;
     FBalance: TBalanceService;
+    FArchiveSvc: TArchiveService;
     FMainData: TMainData;
 
     FPupilsFrame: TPupilsFrame;
@@ -55,7 +56,7 @@ type
   public
     procedure Init(APupilSvc: TPupilService; APaymentSvc: TPaymentService;
       AExpenseSvc: TExpenseService; ABalance: TBalanceService;
-      AMainData: TMainData);
+      AArchiveSvc: TArchiveService; AMainData: TMainData);
   end;
 
 var
@@ -67,12 +68,13 @@ implementation
 
 procedure TMainForm.Init(APupilSvc: TPupilService; APaymentSvc: TPaymentService;
   AExpenseSvc: TExpenseService; ABalance: TBalanceService;
-  AMainData: TMainData);
+  AArchiveSvc: TArchiveService; AMainData: TMainData);
 begin
   FPupilSvc := APupilSvc;
   FPaymentSvc := APaymentSvc;
   FExpenseSvc := AExpenseSvc;
   FBalance := ABalance;
+  FArchiveSvc := AArchiveSvc;
   FMainData := AMainData;
 
   CreateFrames;
@@ -99,7 +101,7 @@ begin
   FArchiveFrame := TArchiveFrame.Create(Self);
   FArchiveFrame.Parent := ArchiveTab;
   FArchiveFrame.Align := alClient;
-  FArchiveFrame.Init(FMainData);
+  FArchiveFrame.Init(FArchiveSvc, FMainData, RefreshData);
 end;
 
 procedure TMainForm.RefreshData(Sender: TObject);

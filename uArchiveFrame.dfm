@@ -11,9 +11,26 @@
   Font.Style = []
   ParentFont = False
   TabOrder = 0
-  object PaymentsArcGrid: TDBGrid
+  object ArcPanel: TPanel
     Left = 0
     Top = 0
+    Width = 1022
+    Height = 41
+    Align = alTop
+    TabOrder = 2
+    object ClosePeriodButton: TButton
+      Left = 8
+      Top = 8
+      Width = 200
+      Height = 25
+      Caption = 'Заархивировать период'
+      TabOrder = 0
+      OnClick = ClosePeriodButtonClick
+    end
+  end
+  object PaymentsArcGrid: TDBGrid
+    Left = 0
+    Top = 41
     Width = 1022
     Height = 290
     Align = alTop
@@ -26,7 +43,7 @@
   end
   object ArcSplitter: TSplitter
     Left = 0
-    Top = 290
+    Top = 331
     Width = 1022
     Height = 5
     Cursor = crVSplit
@@ -35,9 +52,9 @@
   end
   object ExpensesArcGrid: TDBGrid
     Left = 0
-    Top = 295
+    Top = 336
     Width = 1022
-    Height = 286
+    Height = 245
     Align = alClient
     TabOrder = 1
     TitleFont.Charset = DEFAULT_CHARSET
