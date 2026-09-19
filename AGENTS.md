@@ -53,8 +53,11 @@ VCL-приложение на Delphi для учёта школьных расх
 Не смешивайте SQL-запросы между слоями.
 
 ### Денежные типы
-- Все суммы — `Currency` (не `Integer`): `outlay.summ` — `DECIMAL(7,2)`, копейки
-  не должны теряться. В UI — `TryStrToCurr`, в статусе — формат `%m`.
+- Суммы **расходов** — `Currency`: `outlay.summ` — `DECIMAL(7,2)`, копейки
+  не должны теряться. В UI расходов — `TryStrToCurr` (через `ParseSum`).
+- Суммы **платежей** — `Integer`: `money_from_parents.summ_to_first_november` —
+  `INT`, платежи кратны рублю. В UI платежей — `TryStrToInt` (через `ParseIntSum`).
+- В статусе баланса — формат `%m`.
 
 ### Формы редактирования
 - `uBaseEditForm` — базовая форма с 3 Edit + кнопки, виртуальные `Validate`,
@@ -103,6 +106,11 @@ VCL-приложение на Delphi для учёта школьных расх
 - Параметры в `uDb.pas`: `SqlServerName`, `SqlDatabaseName`.
 - Windows-аутентификация (`OSAuthent=Yes`). Для SQL-логина добавить
   `User_Name`/`Password` и убрать `OSAuthent`.
+- Для ODBC Driver 18 и выше добавить `Encrypt=No` и
+  `TrustServerCertificate=Yes`, иначе подключение к локальному серверу с
+  самоподписанным сертификатом упадёт с ошибкой SSL. Эти параметры должны быть
+  и в `uDb.pas`, и в `tests/uRepositoryTests.pas` (функция `SqlServerAvailable`
+  и `SetupFixture`).
 
 ## Сборка и проверка
 

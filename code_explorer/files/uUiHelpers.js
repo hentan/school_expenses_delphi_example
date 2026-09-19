@@ -35,6 +35,9 @@ function ConfirmDelete(const APrompt: string): Boolean;
 // Разобрать строку суммы: Trim + TryStrToCurr + значение > 0.
 function ParseSum(const AText: string; out AValue: Currency): Boolean;
 
+// Разобрать строку целой суммы: Trim + TryStrToInt + значение > 0.
+function ParseIntSum(const AText: string; out AValue: Integer): Boolean;
+
 implementation
 
 uses
@@ -154,6 +157,11 @@ begin
   Result := TryStrToCurr(Trim(AText), AValue) and (AValue > 0);
 end;
 
+function ParseIntSum(const AText: string; out AValue: Integer): Boolean;
+begin
+  Result := TryStrToInt(Trim(AText), AValue) and (AValue > 0);
+end;
+
 end.
 `,
   annotations: [
@@ -228,9 +236,14 @@ end.
       explanation: 'Стандартный диалог «Да/Нет». MessageDlg — модальное окно с вопросом. mtConfirmation — иконка вопроса. [mbYes, mbNo] — кнопки. Возвращает True если mrYes. Используется во всех Delete-обработчиках перед удалением, чтобы защитить от случайного нажатия.'
     },
     {
-      startLine: 150, endLine: 153,
+      startLine: 152, endLine: 155,
       title: 'ParseSum',
-      explanation: 'Разбор строки в Currency. TryStrToCurr пытается преобразовать (учитывая локаль — разделитель дроби), возвращает True при успехе. Дополнительная проверка AValue > 0 — сумма должна быть положительной. out-параметр AValue — результат. Используется в AddPaymentClick/AddExpenseClick перед вызовом сервиса.'
+      explanation: 'Разбор строки в Currency. TryStrToCurr пытается преобразовать (учитывая локаль — разделитель дроби), возвращает True при успехе. Дополнительная проверка AValue > 0 — сумма должна быть положительной. out-параметр AValue — результат. Используется в AddExpenseClick перед вызовом сервиса.'
+    },
+    {
+      startLine: 157, endLine: 161,
+      title: 'ParseIntSum',
+      explanation: 'Разбор строки в целое Integer. TryStrToInt пытается преобразовать строку в целое число, возвращает True при успехе. Дополнительная проверка AValue > 0 — сумма должна быть положительной. out-параметр AValue — результат. Используется в AddPaymentClick перед вызовом сервиса, потому что платежи хранятся в рублях без копеек.'
     }
   ]
 };

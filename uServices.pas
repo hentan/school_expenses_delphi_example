@@ -42,9 +42,9 @@ type
     FRepository: IPaymentRepository;
   public
     constructor Create(ARepository: IPaymentRepository);
-    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Integer);
     procedure Delete(AId: Integer);
-    procedure Update(AId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Update(AId: Integer; const AChildrenName: string; ASum: Integer);
     function Total: Currency;
   end;
 
@@ -130,7 +130,7 @@ begin
 end;
 
 procedure TPaymentService.Add(APupilId: Integer; const AChildrenName: string;
-  ASum: Currency);
+  ASum: Integer);
 begin
   if APupilId <= 0 then
     raise EValidationException.Create('Выберите ученика');
@@ -147,7 +147,7 @@ begin
 end;
 
 procedure TPaymentService.Update(AId: Integer; const AChildrenName: string;
-  ASum: Currency);
+  ASum: Integer);
 begin
   if AId <= 0 then
     raise EValidationException.Create('Выберите платёж');

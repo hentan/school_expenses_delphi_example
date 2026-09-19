@@ -123,8 +123,9 @@ cd tests
   передаёт его в `INSERT`; добавление ученика на чистой базе требует отдельного
   исправления модели id. Интеграционный тест обходит это ограничение явным
   INSERT (см. `tests/uRepositoryTests.pas`).
-- Код использует `Currency`, а `money_from_parents.summ_to_first_november` в
-  миграции объявлено как `INT`.
+- Суммы платежей теперь передаются в Delphi как `Integer`, что соответствует
+  `money_from_parents.summ_to_first_november` (`INT`). Расходы по-прежнему
+  используют `Currency` / `DECIMAL(7,2)`.
 - Архивируется удаление расходов, но не их обновление.
 - Логические связи `money_from_parents.id` и `outlay.customer` с учениками не
   оформлены внешними ключами в миграции.

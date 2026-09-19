@@ -75,8 +75,10 @@ begin
 end;
 
 function TuEditPaymentForm.Validate: Boolean;
+var
+  SumValue: Currency;
 begin
-  // Платёж в схеме дампа: ученик выбирается из списка + сумма.
+  // Платёж в схеме дампа: ученик выбирается из списка + целая сумма в рублях.
   Result := False;
 
   if GetPupilId <= 0 then
@@ -87,6 +89,13 @@ begin
 
   if not ValidateSum then
     Exit;
+
+  SumValue := GetSum;
+  if SumValue <> Trunc(SumValue) then
+  begin
+    ShowMessage('Сумма платежа должна быть целым числом рублей');
+    Exit;
+  end;
 
   Result := True;
 end;

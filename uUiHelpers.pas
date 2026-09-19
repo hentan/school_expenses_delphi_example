@@ -33,6 +33,9 @@ function ConfirmDelete(const APrompt: string): Boolean;
 // Разобрать строку суммы: Trim + TryStrToCurr + значение > 0.
 function ParseSum(const AText: string; out AValue: Currency): Boolean;
 
+// Разобрать строку целой суммы: Trim + TryStrToInt + значение > 0.
+function ParseIntSum(const AText: string; out AValue: Integer): Boolean;
+
 implementation
 
 uses
@@ -150,6 +153,11 @@ end;
 function ParseSum(const AText: string; out AValue: Currency): Boolean;
 begin
   Result := TryStrToCurr(Trim(AText), AValue) and (AValue > 0);
+end;
+
+function ParseIntSum(const AText: string; out AValue: Integer): Boolean;
+begin
+  Result := TryStrToInt(Trim(AText), AValue) and (AValue > 0);
 end;
 
 end.

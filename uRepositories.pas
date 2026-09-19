@@ -51,9 +51,9 @@ type
 
   IPaymentRepository = interface
     ['{F5A1C2E0-1111-4A11-9A11-000000000002}']
-    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Integer);
     procedure Delete(AId: Integer);
-    procedure Update(AId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Update(AId: Integer; const AChildrenName: string; ASum: Integer);
     function Total: Currency;
   end;
 
@@ -95,9 +95,9 @@ type
   // Добавляет поступления денег и считает общую сумму поступлений.
   TPaymentRepository = class(TRepository, IPaymentRepository)
   public
-    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Integer);
     procedure Delete(AId: Integer);
-    procedure Update(AId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Update(AId: Integer; const AChildrenName: string; ASum: Integer);
     function Total: Currency;
   end;
 
@@ -213,7 +213,7 @@ end;
 { TPaymentRepository }
 
 procedure TPaymentRepository.Add(APupilId: Integer; const AChildrenName: string;
-  ASum: Currency);
+  ASum: Integer);
 begin
   FConnection.ExecSQL(
     'INSERT INTO money_from_parents(children_name, summ_to_first_november, id) ' +
@@ -231,7 +231,7 @@ begin
 end;
 
 procedure TPaymentRepository.Update(AId: Integer; const AChildrenName: string;
-  ASum: Currency);
+  ASum: Integer);
 begin
   FConnection.ExecSQL(
     'UPDATE dbo.money_from_parents SET children_name = :children_name, ' +

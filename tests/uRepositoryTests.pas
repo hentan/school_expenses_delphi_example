@@ -120,6 +120,8 @@ begin
     Conn.Params.Values['DriverID'] := 'MSSQL';
     Conn.Params.Values['Server'] := 'localhost';
     Conn.Params.Values['OSAuthent'] := 'Yes';
+    Conn.Params.Values['Encrypt'] := 'No';
+    Conn.Params.Values['TrustServerCertificate'] := 'Yes';
     try
       Conn.Connected := True;
       Result := True;
@@ -141,6 +143,8 @@ begin
   FConn.Params.Values['DriverID'] := 'MSSQL';
   FConn.Params.Values['Server'] := 'localhost';
   FConn.Params.Values['OSAuthent'] := 'Yes';
+  FConn.Params.Values['Encrypt'] := 'No';
+  FConn.Params.Values['TrustServerCertificate'] := 'Yes';
   FConn.Connected := True;
 
   // Свежая база на каждый прогон.

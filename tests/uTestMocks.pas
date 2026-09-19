@@ -59,15 +59,15 @@ type
     UpdateCount: Integer;
     LastAddedPupilId: Integer;
     LastAddedName: string;
-    LastAddedSum: Currency;
+    LastAddedSum: Integer;
     LastDeletedId: Integer;
     LastUpdatedId: Integer;
     LastUpdatedName: string;
-    LastUpdatedSum: Currency;
+    LastUpdatedSum: Integer;
     TotalToReturn: Currency;
-    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Integer);
     procedure Delete(AId: Integer);
-    procedure Update(AId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Update(AId: Integer; const AChildrenName: string; ASum: Integer);
     function Total: Currency;
   end;
 
@@ -171,7 +171,7 @@ end;
 { TMockPaymentRepo }
 
 procedure TMockPaymentRepo.Add(APupilId: Integer; const AChildrenName: string;
-  ASum: Currency);
+  ASum: Integer);
 begin
   Inc(AddCount);
   LastAddedPupilId := APupilId;
@@ -186,7 +186,7 @@ begin
 end;
 
 procedure TMockPaymentRepo.Update(AId: Integer; const AChildrenName: string;
-  ASum: Currency);
+  ASum: Integer);
 begin
   Inc(UpdateCount);
   LastUpdatedId := AId;

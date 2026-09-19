@@ -103,11 +103,11 @@ end;
 
 procedure TPaymentsFrame.AddPaymentClick(Sender: TObject);
 var
-  Sum: Currency;
+  Sum: Integer;
 begin
-  if not ParseSum(PaymentSumEdit.Text, Sum) then
+  if not ParseIntSum(PaymentSumEdit.Text, Sum) then
   begin
-    ShowMessage('Введите положительную сумму');
+    ShowMessage('Введите положительную целую сумму');
     Exit;
   end;
   try
@@ -139,6 +139,7 @@ end;
 procedure TPaymentsFrame.PaymentGridDbClick(Sender: TObject);
 var
   PaymentId: Integer;
+  Sum: Integer;
   EditForm: TuEditPaymentForm;
 begin
   if FMainData.PaymentsEmpty then
@@ -157,9 +158,10 @@ begin
   try
     if EditForm.ShowModal = mrOk then
     try
+      Sum := Trunc(EditForm.GetSum);
       FPaymentSvc.Update(PaymentId,
         FMainData.PupilNameById(EditForm.GetPupilId),
-        EditForm.GetSum);
+        Sum);
       if Assigned(FOnRefresh) then
         FOnRefresh(Self);
     except
@@ -222,7 +224,7 @@ end.
     {
       startLine: 102, endLine: 122,
       title: 'AddPaymentClick — добавление платежа',
-      explanation: 'ParseSum (uUiHelpers) проверяет сумму: Trim + TryStrToCurr + > 0. Если невалидна — ShowMessage и Exit (раньше сервиса, чтобы не бросать исключение). FPaymentSvc.Add(id ученика из combo, имя из SelectedPupilName, сумма). После успеха — очистить поле суммы и FOnRefresh. try/except ловит EValidationException (например, ученик не выбран → id=0 → «Выберите ученика»).'
+      explanation: 'ParseIntSum (uUiHelpers) проверяет сумму: Trim + TryStrToInt + > 0. Платежи хранятся в целых рублях, поэтому дробные значения и нечисловой ввод отклоняются. Если невалидна — ShowMessage и Exit (раньше сервиса, чтобы не бросать исключение). FPaymentSvc.Add(id ученика из combo, имя из SelectedPupilName, сумма). После успеха — очистить поле суммы и FOnRefresh. try/except ловит EValidationException (например, ученик не выбран → id=0 → «Выберите ученика»).'
     },
     {
       startLine: 124, endLine: 135,
@@ -232,7 +234,7 @@ end.
     {
       startLine: 137, endLine: 169,
       title: 'PaymentGridDbClick — редактирование',
-      explanation: 'Двойной клик → форма TuEditPaymentForm. Передаёт: имя ученика (в Edit1, но он «Не используется»), пустую строку (назначение, не используется), сумму (Edit3), список учеников для combo, id текущего ученика (для выбора). ShowModal = mrOk → FPaymentSvc.Update(PaymentId, имя нового ученика через PupilNameById(GetPupilId), новая сумма). try/finally освобождает форму, внутренний try/except ловит ошибки.'
+      explanation: 'Двойной клик → форма TuEditPaymentForm. Передаёт: имя ученика (в Edit1, но он «Не используется»), пустую строку (назначение, не используется), сумму (Edit3), список учеников для combo, id текущего ученика (для выбора). ShowModal = mrOk → Sum := Trunc(EditForm.GetSum), затем FPaymentSvc.Update(PaymentId, имя нового ученика через PupilNameById(GetPupilId), Sum). Trunc безопасен, потому что форма платежа проверяет, что сумма целая. try/finally освобождает форму, внутренний try/except ловит ошибки.'
     },
     {
       startLine: 171, endLine: 175,

@@ -44,9 +44,9 @@ type
     FRepository: IPaymentRepository;
   public
     constructor Create(ARepository: IPaymentRepository);
-    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Add(APupilId: Integer; const AChildrenName: string; ASum: Integer);
     procedure Delete(AId: Integer);
-    procedure Update(AId: Integer; const AChildrenName: string; ASum: Currency);
+    procedure Update(AId: Integer; const AChildrenName: string; ASum: Integer);
     function Total: Currency;
   end;
 
@@ -132,7 +132,7 @@ begin
 end;
 
 procedure TPaymentService.Add(APupilId: Integer; const AChildrenName: string;
-  ASum: Currency);
+  ASum: Integer);
 begin
   if APupilId <= 0 then
     raise EValidationException.Create('Выберите ученика');
@@ -149,7 +149,7 @@ begin
 end;
 
 procedure TPaymentService.Update(AId: Integer; const AChildrenName: string;
-  ASum: Currency);
+  ASum: Integer);
 begin
   if AId <= 0 then
     raise EValidationException.Create('Выберите платёж');
@@ -325,7 +325,7 @@ end.
     {
       startLine: 124, endLine: 162,
       title: 'TPaymentService целиком',
-      explanation: 'Тот же паттерн «проверь и передай», но с денежной проверкой: ASum <= 0 запрещено (платёж на ноль или отрицательный смысла не имеет). Currency поддерживает копейки. Даты и назначения у платежей нет — в таблице money_from_parents таких колонок просто нет.'
+      explanation: 'Тот же паттерн «проверь и передай», но с денежной проверкой: ASum <= 0 запрещено (платёж на ноль или отрицательный смысла не имеет). ASum — Integer, потому что в схеме платежи хранятся в целых рублях (money_from_parents.summ_to_first_november INT). Даты и назначения у платежей нет — в таблице money_from_parents таких колонок просто нет.'
     },
     {
       startLine: 164, endLine: 212,

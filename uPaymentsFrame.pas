@@ -101,11 +101,11 @@ end;
 
 procedure TPaymentsFrame.AddPaymentClick(Sender: TObject);
 var
-  Sum: Currency;
+  Sum: Integer;
 begin
-  if not ParseSum(PaymentSumEdit.Text, Sum) then
+  if not ParseIntSum(PaymentSumEdit.Text, Sum) then
   begin
-    ShowMessage('Введите положительную сумму');
+    ShowMessage('Введите положительную целую сумму');
     Exit;
   end;
   try
@@ -137,6 +137,7 @@ end;
 procedure TPaymentsFrame.PaymentGridDbClick(Sender: TObject);
 var
   PaymentId: Integer;
+  Sum: Integer;
   EditForm: TuEditPaymentForm;
 begin
   if FMainData.PaymentsEmpty then
@@ -155,9 +156,10 @@ begin
   try
     if EditForm.ShowModal = mrOk then
     try
+      Sum := Trunc(EditForm.GetSum);
       FPaymentSvc.Update(PaymentId,
         FMainData.PupilNameById(EditForm.GetPupilId),
-        EditForm.GetSum);
+        Sum);
       if Assigned(FOnRefresh) then
         FOnRefresh(Self);
     except
