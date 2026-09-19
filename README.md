@@ -54,9 +54,22 @@ SchoolExpensesDemo.dpr
 ```pascal
 SqlServerName = 'localhost';
 SqlDatabaseName = 'foura';
+
+// Для локального SQL Server с самоподписанным сертификатом (ODBC Driver 18):
+Encrypt = 'No';
+TrustServerCertificate = 'Yes';
 ```
 
-Используется Windows-аутентификация:
+Используется Windows-аутентификация. Параметры `Encrypt` и
+`TrustServerCertificate` предназначены для локального SQL Server: для
+production-сервера следует установить доверенный сертификат и включить проверку
+сертификата.
+
+Для экземпляра `SQLEXPRESS` замени в `uDb.pas` только имя сервера:
+
+```pascal
+SqlServerName = '.\SQLEXPRESS';
+```
 
 ```pascal
 FConnection.Params.Values['OSAuthent'] := 'Yes';
@@ -71,6 +84,9 @@ FConnection.Params.Values['OSAuthent'] := 'Yes';
 2. Убедитесь, что запущен SQL Server на `localhost` и доступен FireDAC-драйвер
    MSSQL.
 3. Выберите Win64 или Win32 и запустите проект через F9.
+
+При первом запуске приложение создаст базу `foura`, если она отсутствует, затем
+создаст таблицы и триггеры архива.
 
 Подробный порядок старта и потоки данных описаны в
 [`how-it-works.md`](how-it-works.md). Краткая техническая схема находится в

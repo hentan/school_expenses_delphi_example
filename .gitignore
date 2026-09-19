@@ -38,3 +38,6 @@ localhost_sqlserver.sql
 .zcode/
 .codex/
 .agents/
+
+# OS / local shortcuts
+*.lnk
